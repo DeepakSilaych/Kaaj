@@ -13,13 +13,11 @@ UPLOAD_DIR = "uploads/pdfs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Hatchet client for triggering workflows
-# TODO: Re-enable when Hatchet cloud is working
-# try:
-#     from hatchet_sdk import Hatchet
-#     hatchet = Hatchet()
-# except Exception:
-#     hatchet = None
-hatchet = None  # Force sync parsing for now
+try:
+    from hatchet_sdk import Hatchet
+    hatchet = Hatchet()
+except Exception:
+    hatchet = None
 
 
 
