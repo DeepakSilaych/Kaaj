@@ -1,13 +1,11 @@
-"""LLM-based PDF parsing service using OpenRouter."""
+"""LLM-based PDF parsing service using Google Gemini."""
 import json
+import os
 import fitz
 import httpx
 
-OPENROUTER_API_KEY = "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"
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-
-# Use Gemini Flash for parsing
-DEFAULT_MODEL = "google/gemini-2.0-flash-001"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 EXTRACTION_PROMPT = """You are an expert at parsing lender program guidelines PDFs for equipment financing.
 
@@ -79,35 +77,37 @@ def extract_text_from_bytes(pdf_bytes: bytes) -> str:
     return text
 
 
-def parse_pdf_with_llm(pdf_text: str, model: str = DEFAULT_MODEL) -> dict:
-    """Use OpenRouter to extract structured program data from PDF text."""
-    if not OPENROUTER_API_KEY:
-        return {"error": "OPENROUTER_API_KEY not set"}
+def parse_pdf_with_llm(pdf_text: str) -> dict:
+    """Use Gemini to extract structured program data from PDF text."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"error": "GEMINI_API_KEY not set"}
     
     prompt = EXTRACTION_PROMPT + pdf_text[:30000]  # Limit text length
     
     response = httpx.post(
-        OPENROUTER_URL,
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://lendermatch.app",
-            "X-Title": "LenderMatch PDF Parser"
-        },
+        f"{GEMINI_URL}?key={api_key}",
+        headers={"Content-Type": "application/json"},
         json={
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.1,
-            "max_tokens": 4000,
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 4000,
+            }
         },
         timeout=60.0
     )
     
     if response.status_code != 200:
-        return {"error": f"OpenRouter API error: {response.status_code} - {response.text}"}
+        return {"error": f"Gemini API error: {response.status_code} - {response.text}"}
     
     data = response.json()
-    response_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    
+    # Extract text from Gemini response
+    try:
+        response_text = data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        return {"error": "Unexpected Gemini response format", "raw": data}
     
     # Clean up response - remove markdown code blocks if present
     if response_text.startswith("```"):
