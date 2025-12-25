@@ -141,10 +141,12 @@ def parse_pdf_task(input: ParsePdfInput, ctx: Context) -> dict:
         }
         
         if program_id:
-            # Update existing program
+            # Update existing program (keep original name)
             program = db.query(models.Program).filter_by(id=program_id).first()
             if program:
                 for k, v in program_data.items():
+                    if k == "name":  # Don't overwrite name
+                        continue
                     if v is not None:
                         setattr(program, k, v)
                 db.commit()
