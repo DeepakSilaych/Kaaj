@@ -11,6 +11,9 @@ import models
 import matching
 from services.pdf_parser import parse_pdf_file
 
+# Initialize database tables
+models.init_db()
+
 hatchet = Hatchet()
 
 
