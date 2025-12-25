@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
 import models
-import auth
 
 router = APIRouter(prefix="/api/programs", tags=["programs"])
 
@@ -83,10 +82,6 @@ class ProgramUpdate(BaseModel):
     priority: Optional[int] = None
 
 
-def is_admin(user: models.User) -> bool:
-    return user.role == "admin" or user.email == "deepaksilaych@gmail.com"
-
-
 def program_to_dict(p) -> dict:
     return {
         "id": p.id,
@@ -141,11 +136,7 @@ def get_program(program_id: int, db: Session = Depends(models.get_db)):
 def create_program(
     program: ProgramCreate,
     db: Session = Depends(models.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
 ):
-    if not is_admin(current_user):
-        raise HTTPException(403, "Not authorized")
-    
     db_program = models.Program(**program.model_dump())
     db.add(db_program)
     db.commit()
@@ -158,11 +149,7 @@ def update_program(
     program_id: int,
     program: ProgramUpdate,
     db: Session = Depends(models.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
 ):
-    if not is_admin(current_user):
-        raise HTTPException(403, "Not authorized")
-
     db_program = db.query(models.Program).filter(models.Program.id == program_id).first()
     if not db_program:
         raise HTTPException(404, "Program not found")
@@ -179,11 +166,7 @@ def update_program(
 def delete_program(
     program_id: int,
     db: Session = Depends(models.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
 ):
-    if not is_admin(current_user):
-        raise HTTPException(403, "Not authorized")
-    
     db_program = db.query(models.Program).filter(models.Program.id == program_id).first()
     if not db_program:
         raise HTTPException(404, "Program not found")
@@ -200,11 +183,8 @@ def delete_program(
 async def upload_and_parse_pdf(
     file: UploadFile = File(...),
     db: Session = Depends(models.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
 ):
     """Upload PDF and trigger async LLM parsing via Hatchet."""
-    if not is_admin(current_user):
-        raise HTTPException(403, "Not authorized")
 
     if not file.filename.endswith('.pdf'):
         raise HTTPException(400, "Only PDF files accepted")
@@ -269,11 +249,8 @@ async def upload_and_parse_pdf(
 async def reparse_program_pdf(
     program_id: int,
     db: Session = Depends(models.get_db),
-    current_user: models.User = Depends(auth.get_current_user)
 ):
     """Re-parse an existing program's PDF with LLM."""
-    if not is_admin(current_user):
-        raise HTTPException(403, "Not authorized")
 
     db_program = db.query(models.Program).filter(models.Program.id == program_id).first()
     if not db_program:
