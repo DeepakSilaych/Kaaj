@@ -13,11 +13,13 @@ UPLOAD_DIR = "uploads/pdfs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Hatchet client for triggering workflows
-try:
-    from hatchet_sdk import Hatchet
-    hatchet = Hatchet()
-except Exception:
-    hatchet = None
+# TODO: Re-enable when Hatchet cloud is working
+# try:
+#     from hatchet_sdk import Hatchet
+#     hatchet = Hatchet()
+# except Exception:
+#     hatchet = None
+hatchet = None  # Force sync parsing for now
 
 
 
@@ -217,20 +219,23 @@ async def upload_and_parse_pdf(
     db.commit()
     db.refresh(db_program)
     
-    # Trigger Hatchet workflow for async parsing
+    # Try Hatchet workflow, fallback to sync if fails
     if hatchet:
-        hatchet.event.push("program:parse_pdf", {
-            "pdf_path": filepath,
-            "program_id": db_program.id
-        })
-        return {
-            "status": "processing",
-            "message": "PDF uploaded and parsing started",
-            "pdf_path": filepath,
-            "program_id": db_program.id
-        }
+        try:
+            hatchet.event.push("program:parse_pdf", {
+                "pdf_path": filepath,
+                "program_id": db_program.id
+            })
+            return {
+                "status": "processing",
+                "message": "PDF uploaded and parsing started",
+                "pdf_path": filepath,
+                "program_id": db_program.id
+            }
+        except Exception as e:
+            print(f"Hatchet push failed: {e}, falling back to sync")
     
-    # Fallback: sync parsing if Hatchet not available
+    # Fallback: sync parsing
     from services.pdf_parser import parse_pdf_file
     result = parse_pdf_file(filepath)
     
@@ -271,13 +276,16 @@ async def reparse_program_pdf(
     if not db_program.pdf_path or not os.path.exists(db_program.pdf_path):
         raise HTTPException(400, "No PDF associated with this program")
     
-    # Trigger Hatchet workflow for async parsing
+    # Try Hatchet workflow, fallback to sync if fails
     if hatchet:
-        hatchet.event.push("program:parse_pdf", {
-            "pdf_path": db_program.pdf_path,
-            "program_id": program_id
-        })
-        return {"status": "processing", "program_id": program_id}
+        try:
+            hatchet.event.push("program:parse_pdf", {
+                "pdf_path": db_program.pdf_path,
+                "program_id": program_id
+            })
+            return {"status": "processing", "program_id": program_id}
+        except Exception as e:
+            print(f"Hatchet push failed: {e}, falling back to sync")
     
     # Fallback: sync parsing
     from services.pdf_parser import parse_pdf_file
