@@ -12,19 +12,15 @@ services:
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
-      - ./pdf:/app/pdf:ro
     command: uvicorn main:app --host 0.0.0.0 --port 8000
 
   worker:
     build: .
     env_file:
       - .env
-    environment:
-      - PDF_SOURCE_DIR=/app/pdf
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
-      - ./pdf:/app/pdf:ro
     command: python worker.py
     depends_on:
       - api
