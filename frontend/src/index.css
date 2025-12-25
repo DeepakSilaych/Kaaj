@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  /* Light theme (default) */
+  --color-background: oklch(98.5% 0.002 247);
+  --color-foreground: oklch(13% 0.028 265);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(13% 0.028 265);
+  --color-popover: oklch(100% 0 0);
+  --color-popover-foreground: oklch(13% 0.028 265);
+  --color-primary: oklch(55% 0.25 270);
+  --color-primary-foreground: oklch(100% 0 0);
+  --color-secondary: oklch(96% 0.01 247);
+  --color-secondary-foreground: oklch(13% 0.028 265);
+  --color-muted: oklch(96% 0.01 247);
+  --color-muted-foreground: oklch(55% 0.02 265);
+  --color-accent: oklch(96% 0.01 247);
+  --color-accent-foreground: oklch(13% 0.028 265);
+  --color-destructive: oklch(55% 0.22 27);
+  --color-destructive-foreground: oklch(100% 0 0);
+  --color-border: oklch(90% 0.01 247);
+  --color-input: oklch(90% 0.01 247);
+  --color-ring: oklch(55% 0.25 270);
+  --radius: 0.5rem;
+}
+
+/* Dark theme overrides */
+.dark {
+  --color-background: oklch(12% 0.02 265);
+  --color-foreground: oklch(98% 0.005 247);
+  --color-card: oklch(16% 0.025 265);
+  --color-card-foreground: oklch(98% 0.005 247);
+  --color-popover: oklch(16% 0.025 265);
+  --color-popover-foreground: oklch(98% 0.005 247);
+  --color-primary: oklch(60% 0.25 270);
+  --color-primary-foreground: oklch(100% 0 0);
+  --color-secondary: oklch(20% 0.03 265);
+  --color-secondary-foreground: oklch(98% 0.005 247);
+  --color-muted: oklch(20% 0.03 265);
+  --color-muted-foreground: oklch(55% 0.02 265);
+  --color-accent: oklch(25% 0.04 265);
+  --color-accent-foreground: oklch(98% 0.005 247);
+  --color-destructive: oklch(55% 0.22 27);
+  --color-destructive-foreground: oklch(100% 0 0);
+  --color-border: oklch(28% 0.04 265);
+  --color-input: oklch(28% 0.04 265);
+  --color-ring: oklch(60% 0.25 270);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--color-border);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  min-height: 100vh;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(oklch(55% 0.25 270 / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(55% 0.25 270 / 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.dark body::before {
+  opacity: 0.3;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+}
