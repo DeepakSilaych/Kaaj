@@ -12,6 +12,13 @@ router = APIRouter(prefix="/api/programs", tags=["programs"])
 UPLOAD_DIR = "uploads/pdfs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Hatchet client for triggering workflows
+try:
+    from hatchet_sdk import Hatchet
+    hatchet = Hatchet()
+except Exception:
+    hatchet = None
+
 
 
 class ProgramCreate(BaseModel):
@@ -210,7 +217,20 @@ async def upload_and_parse_pdf(
     db.commit()
     db.refresh(db_program)
     
-    # Parse PDF synchronously
+    # Trigger Hatchet workflow for async parsing
+    if hatchet:
+        hatchet.event.push("program:parse_pdf", {
+            "pdf_path": filepath,
+            "program_id": db_program.id
+        })
+        return {
+            "status": "processing",
+            "message": "PDF uploaded and parsing started",
+            "pdf_path": filepath,
+            "program_id": db_program.id
+        }
+    
+    # Fallback: sync parsing if Hatchet not available
     from services.pdf_parser import parse_pdf_file
     result = parse_pdf_file(filepath)
     
@@ -224,7 +244,7 @@ async def upload_and_parse_pdf(
     
     # Update program with parsed data (keep original name)
     for k, v in result.items():
-        if k == "name":  # Don't overwrite name
+        if k == "name":
             continue
         if hasattr(db_program, k) and v is not None:
             setattr(db_program, k, v)
@@ -244,8 +264,6 @@ async def reparse_program_pdf(
     db: Session = Depends(models.get_db),
 ):
     """Re-parse an existing program's PDF with LLM."""
-    from services.pdf_parser import parse_pdf_file
-
     db_program = db.query(models.Program).filter(models.Program.id == program_id).first()
     if not db_program:
         raise HTTPException(404, "Program not found")
@@ -253,12 +271,21 @@ async def reparse_program_pdf(
     if not db_program.pdf_path or not os.path.exists(db_program.pdf_path):
         raise HTTPException(400, "No PDF associated with this program")
     
+    # Trigger Hatchet workflow for async parsing
+    if hatchet:
+        hatchet.event.push("program:parse_pdf", {
+            "pdf_path": db_program.pdf_path,
+            "program_id": program_id
+        })
+        return {"status": "processing", "program_id": program_id}
+    
+    # Fallback: sync parsing
+    from services.pdf_parser import parse_pdf_file
     result = parse_pdf_file(db_program.pdf_path)
     
     if "error" in result:
         return {"status": "error", "error": result["error"], "program_id": program_id}
     
-    # Update program with parsed data (keep original name)
     for k, v in result.items():
         if k == "name":
             continue
