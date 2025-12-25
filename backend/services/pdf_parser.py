@@ -1,14 +1,9 @@
 """LLM-based PDF parsing service using OpenRouter."""
-import os
 import json
 import fitz
 import httpx
-from dotenv import load_dotenv
 
-# Load .env file
-load_dotenv()
-
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = "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"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Use Gemini Flash for parsing
