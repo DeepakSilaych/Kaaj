@@ -12,14 +12,6 @@ router = APIRouter(prefix="/api/programs", tags=["programs"])
 UPLOAD_DIR = "uploads/pdfs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() == "true"
-
-# Hatchet client for triggering workflows
-try:
-    from hatchet_sdk import Hatchet
-    hatchet = Hatchet()
-except Exception:
-    hatchet = None
 
 
 class ProgramCreate(BaseModel):
@@ -218,31 +210,32 @@ async def upload_and_parse_pdf(
     db.commit()
     db.refresh(db_program)
     
-    # Use sync mode or async via Hatchet
-    if SYNC_MODE or not hatchet:
-        from services.pdf_parser import parse_pdf_file
-        result = parse_pdf_file(filepath)
-        for k, v in result.items():
-            if k != "name" and hasattr(db_program, k) and v is not None:
-                setattr(db_program, k, v)
-        db.commit()
+    # Parse PDF synchronously
+    from services.pdf_parser import parse_pdf_file
+    result = parse_pdf_file(filepath)
+    
+    if "error" in result:
         return {
-            "status": "completed",
-            "message": "PDF parsed successfully",
+            "status": "error",
+            "error": result["error"],
             "pdf_path": filepath,
             "program_id": db_program.id
         }
-    else:
-        hatchet.event.push("program:parse_pdf", {
-            "pdf_path": filepath,
-            "program_id": db_program.id
-        })
-        return {
-            "status": "processing",
-            "message": "PDF uploaded and parsing started",
-            "pdf_path": filepath,
-            "program_id": db_program.id
-        }
+    
+    # Update program with parsed data (keep original name)
+    for k, v in result.items():
+        if k == "name":  # Don't overwrite name
+            continue
+        if hasattr(db_program, k) and v is not None:
+            setattr(db_program, k, v)
+    db.commit()
+    
+    return {
+        "status": "completed",
+        "message": "PDF parsed successfully",
+        "pdf_path": filepath,
+        "program_id": db_program.id
+    }
 
 
 @router.post("/{program_id}/reparse")
@@ -251,6 +244,7 @@ async def reparse_program_pdf(
     db: Session = Depends(models.get_db),
 ):
     """Re-parse an existing program's PDF with LLM."""
+    from services.pdf_parser import parse_pdf_file
 
     db_program = db.query(models.Program).filter(models.Program.id == program_id).first()
     if not db_program:
@@ -259,17 +253,17 @@ async def reparse_program_pdf(
     if not db_program.pdf_path or not os.path.exists(db_program.pdf_path):
         raise HTTPException(400, "No PDF associated with this program")
     
-    if SYNC_MODE or not hatchet:
-        from services.pdf_parser import parse_pdf_file
-        result = parse_pdf_file(db_program.pdf_path)
-        for k, v in result.items():
-            if k != "name" and hasattr(db_program, k) and v is not None:
-                setattr(db_program, k, v)
-        db.commit()
-        return {"status": "completed", "program_id": program_id}
-    else:
-        hatchet.event.push("program:parse_pdf", {
-            "pdf_path": db_program.pdf_path,
-            "program_id": program_id
-        })
-        return {"status": "parsing", "program_id": program_id}
+    result = parse_pdf_file(db_program.pdf_path)
+    
+    if "error" in result:
+        return {"status": "error", "error": result["error"], "program_id": program_id}
+    
+    # Update program with parsed data (keep original name)
+    for k, v in result.items():
+        if k == "name":
+            continue
+        if hasattr(db_program, k) and v is not None:
+            setattr(db_program, k, v)
+    db.commit()
+    
+    return {"status": "completed", "program_id": program_id}

@@ -1,9 +1,7 @@
-import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models
 import auth
-import matching
 from schemas import ApplicationCreate
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
@@ -14,8 +12,6 @@ try:
     hatchet = Hatchet()
 except Exception:
     hatchet = None
-
-SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() == "true"
 
 
 def is_admin(user: models.User) -> bool:
@@ -84,28 +80,11 @@ def run_matching(
     app.status = "processing"
     db.commit()
     
-    # Use sync mode or async via Hatchet
-    if SYNC_MODE or not hatchet:
-        # Sync fallback
-        db.query(models.MatchResult).filter_by(application_id=app_id).delete()
-        programs = db.query(models.Program).all()
-        results = matching.match_application(app, programs)
-        for r in results:
-            db.add(models.MatchResult(
-                application_id=app_id,
-                program_id=r["program_id"],
-                program_name=r["program_name"],
-                is_eligible=r["is_eligible"],
-                fit_score=r["fit_score"],
-                criteria_results=r["criteria_results"],
-                rejection_reasons=r["rejection_reasons"]
-            ))
-        app.status = "completed"
-        db.commit()
-        return {"status": "completed", "app_id": app_id}
-    else:
+    # Trigger async task via event
+    if hatchet:
         hatchet.event.push("application:match", {"application_id": app_id})
-        return {"status": "processing", "app_id": app_id}
+    
+    return {"status": "processing", "app_id": app_id}
 
 
 @router.get("/{app_id}/results")
