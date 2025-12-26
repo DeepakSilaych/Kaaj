@@ -7,9 +7,7 @@ services:
       - "8000"
     env_file:
       - .env
-    environment:
-      - PDF_SOURCE_DIR=/app/pdf
-      - USE_HATCHET=1
+
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
@@ -19,8 +17,6 @@ services:
     build: .
     env_file:
       - .env
-    environment:
-      - USE_HATCHET=1
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
