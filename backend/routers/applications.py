@@ -64,6 +64,29 @@ def get_application(
     return app
 
 
+@router.delete("/{app_id}")
+def delete_application(
+    app_id: int,
+    db: Session = Depends(models.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    if is_admin(current_user):
+        app = db.query(models.Application).filter(models.Application.id == app_id).first()
+    else:
+        app = db.query(models.Application).filter(
+            models.Application.id == app_id,
+            models.Application.user_id == current_user.id
+        ).first()
+    if not app:
+        raise HTTPException(404, "Application not found")
+    
+    # Delete related match results first
+    db.query(models.MatchResult).filter(models.MatchResult.application_id == app_id).delete()
+    db.delete(app)
+    db.commit()
+    return {"ok": True}
+
+
 @router.post("/{app_id}/match")
 def run_matching(
     app_id: int,
