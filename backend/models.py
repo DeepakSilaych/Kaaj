@@ -33,10 +33,6 @@ class Program(Base):
     description = Column(Text, nullable=True)
     pdf_path = Column(String, nullable=True)
     
-    # Workflow status: draft -> pending_review -> active | rejected
-    status = Column(String, default="active")  # draft, pending_review, active, rejected
-    llm_confidence = Column(Float, nullable=True)  # 0-1 confidence from LLM parsing
-    llm_notes = Column(Text, nullable=True)  # Notes from LLM about parsing
     text_preview = Column(Text, nullable=True)  # First part of PDF text for reference
     
     # Credit criteria

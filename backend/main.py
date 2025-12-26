@@ -8,8 +8,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import models
-from routers import auth_router, applications_router, admin_router, seed_router
+from routers import auth_router, applications_router, admin_router
 from routers.programs import router as programs_router
+from routers.seed import run_seed
 
 app = FastAPI(title="Program Matching API")
 
@@ -31,13 +32,13 @@ os.makedirs("uploads/pdfs", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 models.init_db()
+run_seed()
 
 # Include routers
 app.include_router(auth_router)
 app.include_router(programs_router)
 app.include_router(applications_router)
 app.include_router(admin_router)
-app.include_router(seed_router)
 
 if __name__ == "__main__":
     import uvicorn

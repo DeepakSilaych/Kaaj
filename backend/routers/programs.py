@@ -206,8 +206,14 @@ async def upload_and_parse_pdf(
     with open(filepath, "wb") as f:
         f.write(content)
     
-    # Create program
-    name = os.path.splitext(file.filename)[0]
+    # Create program with unique name
+    base_name = os.path.splitext(file.filename)[0]
+    name = base_name
+    name_counter = 1
+    while db.query(models.Program).filter_by(name=name).first():
+        name = f"{base_name}_{name_counter}"
+        name_counter += 1
+    
     db_program = models.Program(
         name=name,
         description="Processing...",
