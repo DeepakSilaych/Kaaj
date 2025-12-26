@@ -6,6 +6,7 @@ services:
     env_file:
       - .env
     environment:
+      - DATABASE_URL=postgres://postgres:fgdr8v9larZfrHlaoAVuCz8k3yVhHWyRxCis5hPiJGbGKgWgKeFj9stlPNJGB3oV@82.112.236.232:5439/postgres
       - USE_HATCHET=1
     volumes:
       - uploads:/app/uploads
@@ -16,6 +17,7 @@ services:
     env_file:
       - .env
     environment:
+      - DATABASE_URL=postgres://postgres:fgdr8v9larZfrHlaoAVuCz8k3yVhHWyRxCis5hPiJGbGKgWgKeFj9stlPNJGB3oV@82.112.236.232:5439/postgres
       - USE_HATCHET=1
     volumes:
       - uploads:/app/uploads
