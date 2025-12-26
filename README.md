@@ -2,12 +2,10 @@
 
 Equipment finance lender matching system that evaluates loan applications against multiple lender credit policies.
 
-**Live Demo:** https://kaaj.deepaksilaych.me
-
 | Page | URL | Description |
 |------|-----|-------------|
 | Client Portal | https://kaaj.deepaksilaych.me | Submit loan applications and view matches |
-| Admin Portal | https://kaaj.deepaksilaych.me/admin/programs | Manage lender programs and upload PDFs |
+| Admin Portal | https://kaaj.deepaksilaych.me/admin | Manage lender programs and upload PDFs |
 
 Use "Dummy Credentials" button on login page for demo access.
 
