@@ -3,11 +3,14 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, J
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
-
 import os
-DB_PATH = os.environ.get("DATABASE_PATH", "./lender_match.db")
-DATABASE_URL = f"sqlite:///{DB_PATH}"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+
+# PostgreSQL connection
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/postgres"
+)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
