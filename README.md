@@ -36,6 +36,15 @@ cd backend
 docker compose up --build
 ```
 
+### Docker (Local Development)
+
+```bash
+cd backend
+docker compose -f docker-compose.local.yml up --build
+```
+
+This starts API + Worker + local PostgreSQL on port 8000.
+
 ## Architecture
 
 ```
