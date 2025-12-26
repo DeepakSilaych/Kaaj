@@ -1,0 +1,37 @@
+# Local development docker-compose
+# Usage: docker compose -f docker-compose.local.yml up --build
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/app/data/lender_match.db
+      - USE_HATCHET=1
+    volumes:
+      - uploads:/app/uploads
+      - db-data:/app/data
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/app/data/lender_match.db
+      - USE_HATCHET=1
+    volumes:
+      - uploads:/app/uploads
+      - db-data:/app/data
+    command: python worker.py
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  db-data:
+
