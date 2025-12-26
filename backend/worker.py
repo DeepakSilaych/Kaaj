@@ -142,16 +142,22 @@ def parse_pdf_task(input: ParsePdfInput, ctx: Context) -> dict:
         
         if program_id:
             # Update existing program (keep original name)
+            ctx.log(f"Looking for program_id={program_id}")
             program = db.query(models.Program).filter_by(id=program_id).first()
             if program:
+                ctx.log(f"Found program: {program.name}")
                 for k, v in program_data.items():
                     if k == "name":  # Don't overwrite name
                         continue
                     if v is not None:
                         setattr(program, k, v)
+                # Update description to show parsing complete
+                program.description = extracted.get("description") or "Parsed from PDF"
                 db.commit()
                 ctx.log(f"Updated program {program_id}")
                 return {"program_id": program_id, "status": "updated", "confidence": extracted.get("confidence_score")}
+            else:
+                ctx.log(f"ERROR: Program {program_id} not found in database!")
         
         # Create new program
         # Check for duplicate name
