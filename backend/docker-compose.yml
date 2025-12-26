@@ -3,11 +3,13 @@ version: '3.8'
 services:
   api:
     build: .
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     env_file:
       - .env
-
+    environment:
+      - DATABASE_PATH=/app/data/lender_match.db
+      - USE_HATCHET=1
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
@@ -17,6 +19,9 @@ services:
     build: .
     env_file:
       - .env
+    environment:
+      - DATABASE_PATH=/app/data/lender_match.db
+      - USE_HATCHET=1
     volumes:
       - uploads:/app/uploads
       - db-data:/app/data
