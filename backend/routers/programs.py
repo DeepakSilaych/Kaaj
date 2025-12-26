@@ -180,6 +180,9 @@ def delete_program(
     if db_program.pdf_path and os.path.exists(db_program.pdf_path):
         os.remove(db_program.pdf_path)
     
+    # Delete related match results first (foreign key constraint)
+    db.query(models.MatchResult).filter(models.MatchResult.program_id == program_id).delete()
+    
     db.delete(db_program)
     db.commit()
     return {"ok": True}
