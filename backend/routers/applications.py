@@ -88,13 +88,10 @@ def run_matching(
     # Trigger async task via Hatchet, or sync fallback
     if hatchet:
         try:
-            result = hatchet.event.push("application:match", {"application_id": app_id})
-            print(f"Hatchet push success for app {app_id}: {result}", flush=True)
+            hatchet.event.push("application:match", {"application_id": app_id})
             return {"status": "processing", "app_id": app_id}
         except Exception as e:
-            print(f"Hatchet push failed for app {app_id}: {e}", flush=True)
-    else:
-        print(f"Hatchet not available, using sync for app {app_id}", flush=True)
+            print(f"Hatchet push failed: {e}, falling back to sync")
     
     # Sync fallback
     import matching
