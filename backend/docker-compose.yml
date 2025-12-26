@@ -7,7 +7,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://postgres:fgdr8v9larZfrHlaoAVuCz8k3yVhHWyRxCis5hPiJGbGKgWgKeFj9stlPNJGB3oV@82.112.236.232:5439/postgres
-      - USE_HATCHET=1
+      - USE_HATCHET=0
     volumes:
       - uploads:/app/uploads
     command: uvicorn main:app --host 0.0.0.0 --port 8000
@@ -18,7 +18,7 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgres://postgres:fgdr8v9larZfrHlaoAVuCz8k3yVhHWyRxCis5hPiJGbGKgWgKeFj9stlPNJGB3oV@82.112.236.232:5439/postgres
-      - USE_HATCHET=1
+      - USE_HATCHET=0
     volumes:
       - uploads:/app/uploads
     command: python worker.py
