@@ -13,11 +13,16 @@ UPLOAD_DIR = "uploads/pdfs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Hatchet client for triggering workflows
-try:
-    from hatchet_sdk import Hatchet
-    hatchet = Hatchet()
-except Exception:
-    hatchet = None
+# Set USE_HATCHET=1 to enable async processing (for production)
+import os
+if os.getenv("USE_HATCHET"):
+    try:
+        from hatchet_sdk import Hatchet
+        hatchet = Hatchet()
+    except Exception:
+        hatchet = None
+else:
+    hatchet = None  # Use sync parsing for local dev
 
 
 
@@ -220,8 +225,12 @@ async def upload_and_parse_pdf(
         pdf_path=filepath
     )
     db.add(db_program)
-    db.commit()
-    db.refresh(db_program)
+    try:
+        db.commit()
+        db.refresh(db_program)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Database error: {e}")
     
     # Try Hatchet workflow, fallback to sync if fails
     if hatchet:

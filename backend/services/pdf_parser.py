@@ -1,11 +1,8 @@
-"""LLM-based PDF parsing service using Google Gemini."""
+"""LLM-based PDF parsing service using Google Gemini SDK."""
 import json
 import os
 import fitz
-import httpx
-
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+import google.generativeai as genai
 
 EXTRACTION_PROMPT = """You are an expert at parsing lender program guidelines PDFs for equipment financing.
 
@@ -78,36 +75,29 @@ def extract_text_from_bytes(pdf_bytes: bytes) -> str:
 
 
 def parse_pdf_with_llm(pdf_text: str) -> dict:
-    """Use Gemini to extract structured program data from PDF text."""
+    """Use Gemini SDK to extract structured program data from PDF text."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return {"error": "GEMINI_API_KEY not set"}
     
-    prompt = EXTRACTION_PROMPT + pdf_text[:30000]  # Limit text length
+    # Configure SDK
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.0-flash")
     
-    response = httpx.post(
-        f"{GEMINI_URL}?key={api_key}",
-        headers={"Content-Type": "application/json"},
-        json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": 4000,
-            }
-        },
-        timeout=60.0
-    )
+    prompt = EXTRACTION_PROMPT + pdf_text[:30000]
     
-    if response.status_code != 200:
-        return {"error": f"Gemini API error: {response.status_code} - {response.text}"}
-    
-    data = response.json()
-    
-    # Extract text from Gemini response
     try:
-        response_text = data["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError):
-        return {"error": "Unexpected Gemini response format", "raw": data}
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.1,
+                max_output_tokens=4000,
+            )
+        )
+    except Exception as e:
+        return {"error": f"Gemini API error: {e}"}
+    
+    response_text = response.text
     
     # Clean up response - remove markdown code blocks if present
     if response_text.startswith("```"):
