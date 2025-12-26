@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+// Strip /api suffix for static files
+export const STATIC_BASE = API_BASE.replace(/\/api$/, '')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: API_BASE,
 })
 
 api.interceptors.request.use((config) => {

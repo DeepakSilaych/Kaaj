@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useRef, useEffect } from 'react'
-import { fetchPrograms, fetchProgram, updateProgram, deleteProgram, createProgram, uploadProgramPdf, type Program } from '@/api'
+import { fetchPrograms, fetchProgram, updateProgram, deleteProgram, createProgram, uploadProgramPdf, STATIC_BASE, type Program } from '@/api'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -291,7 +291,7 @@ function EditModal({ program, onClose }: { program: Program | null; onClose: () 
                   </div>
                   {fullProgram?.pdf_path ? (
                     <iframe
-                      src={`http://localhost:8000/${fullProgram.pdf_path}`}
+                      src={`${STATIC_BASE}/${fullProgram.pdf_path}`}
                       className="flex-1 w-full min-h-[500px] rounded-lg border border-border"
                       title="PDF Preview"
                     />
