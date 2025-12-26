@@ -1,1 +1,4 @@
 .pnpm-store
+.DS_Store
+**/uploads/
+pdf/
