@@ -6,49 +6,60 @@ import google.generativeai as genai
 
 EXTRACTION_PROMPT = """You are an expert at parsing lender program guidelines PDFs for equipment financing.
 
-Extract the following fields from this PDF text. Return ONLY valid JSON, no markdown.
+IMPORTANT: Extract ALL available information. Look carefully for:
+- Credit scores (FICO, PayNet, Vantage, credit score requirements)
+- Time in business requirements (years, months)
+- Revenue requirements (annual, monthly)
+- Loan amount ranges (min/max funding amounts)
+- Term lengths (months)
+- Bankruptcy/lien/judgment policies
+- State restrictions
+- Industry/equipment restrictions
 
-Required fields (use null if not found):
+Extract the following fields. Return ONLY valid JSON, no markdown.
+
 {
-    "name": "Program name (e.g., 'Stearns Bank - Tier A')",
-    "description": "Brief description of the program",
+    "name": "Lender/Program name from the document header or title",
+    "description": "Brief 1-sentence description of what this program offers",
     
-    "min_fico": integer or null,
+    "min_fico": integer - minimum FICO/credit score required (look for "FICO", "credit score", "personal score"),
     "max_fico": integer or null,
-    "min_fico_no_paynet": integer or null (higher FICO required if no PayNet score),
-    "min_paynet": integer or null,
+    "min_fico_no_paynet": integer or null - higher FICO if no business credit,
+    "min_paynet": integer or null - minimum PayNet/business credit score,
     
-    "min_years_in_business": float or null,
-    "min_years_no_paynet": float or null (higher TIB required if no PayNet),
-    "min_revenue": float or null (annual revenue in dollars),
+    "min_years_in_business": float - minimum years/time in business (convert months to years, e.g. 6 months = 0.5),
+    "min_years_no_paynet": float or null,
+    "min_revenue": float or null - minimum annual revenue in dollars (convert monthly to annual),
     
-    "min_loan_amount": float or null,
-    "max_loan_amount": float or null,
-    "max_term_months": integer or null,
+    "min_loan_amount": float - minimum loan/funding amount,
+    "max_loan_amount": float - maximum loan/funding amount,
+    "max_term_months": integer - maximum term in months,
     
-    "max_bankruptcies": integer (default 0),
-    "min_bankruptcy_years": integer or null (years since discharge required),
-    "allow_tax_liens": boolean (default true),
-    "allow_judgments": boolean (default true),
-    "allow_foreclosures": boolean (default true),
+    "max_bankruptcies": integer - number of bankruptcies allowed (0 if "no bankruptcies"),
+    "min_bankruptcy_years": integer or null - years since discharge required,
+    "allow_tax_liens": boolean - false if tax liens disqualify,
+    "allow_judgments": boolean - false if judgments disqualify,
+    "allow_foreclosures": boolean - false if foreclosures disqualify,
     
-    "require_homeownership": boolean (default false),
-    "require_us_citizen": boolean (default false),
+    "require_homeownership": boolean - true if homeownership required,
+    "require_us_citizen": boolean - true if US citizen/resident required,
     
-    "max_equipment_age_years": integer or null,
-    "max_soft_cost_percent": integer or null,
+    "max_equipment_age_years": integer or null - max age of equipment,
+    "max_soft_cost_percent": integer or null - max soft costs percentage,
     
-    "restricted_states": list of 2-letter state codes that are NOT allowed,
-    "restricted_industries": list of industry names that are NOT allowed,
-    "allowed_equipment_types": list of equipment types that ARE allowed (empty = all allowed),
-    "excluded_equipment_types": list of equipment types NOT allowed,
+    "restricted_states": ["XX", "YY"] - 2-letter codes of states NOT allowed,
+    "restricted_industries": ["Industry1", "Industry2"] - industries NOT allowed,
+    "allowed_equipment_types": [] - equipment types explicitly allowed (empty if not specified),
+    "excluded_equipment_types": ["Type1"] - equipment types NOT allowed,
     
-    "industry_loan_limits": object mapping industry names to max loan amounts (e.g., {"Trucking": 150000}),
+    "industry_loan_limits": {} - special limits by industry,
     
-    "priority": integer 1-3 (3=best tier, 1=standard)
+    "priority": 1-3 (3=top tier/best rates, 2=mid, 1=standard/subprime)
 }
 
-Return ONLY the JSON object, no explanations.
+Use null for fields that are truly not mentioned. DO NOT leave fields as null if the information exists anywhere in the document.
+
+Return ONLY the JSON object.
 
 PDF TEXT:
 """
