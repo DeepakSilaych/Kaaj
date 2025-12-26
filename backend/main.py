@@ -21,6 +21,7 @@ app.add_middleware(
         "http://localhost:5174", 
         "http://localhost:3000",
         "https://kaaj.deepaksilaych.me",
+        "https://bkaaj.deepaksilaych.me",
     ],
     allow_credentials=True,
     allow_methods=["*"],
