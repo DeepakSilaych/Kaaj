@@ -287,6 +287,6 @@ def evaluate_program(application, program) -> dict:
 
 def match_application(application, programs: list) -> list:
     """Match application against all programs."""
-    results = [evaluate_program(application, p) for p in programs if p.status == "active"]
+    results = [evaluate_program(application, p) for p in programs]
     results.sort(key=lambda x: (x["is_eligible"], x["fit_score"]), reverse=True)
     return results

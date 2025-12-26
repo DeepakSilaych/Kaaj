@@ -7,10 +7,15 @@ from schemas import ApplicationCreate
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 # Hatchet client for triggering tasks
-try:
-    from hatchet_sdk import Hatchet
-    hatchet = Hatchet()
-except Exception:
+# Set USE_HATCHET=1 to enable async processing
+import os
+if os.getenv("USE_HATCHET"):
+    try:
+        from hatchet_sdk import Hatchet
+        hatchet = Hatchet()
+    except Exception:
+        hatchet = None
+else:
     hatchet = None
 
 
@@ -80,11 +85,35 @@ def run_matching(
     app.status = "processing"
     db.commit()
     
-    # Trigger async task via event
+    # Trigger async task via Hatchet, or sync fallback
     if hatchet:
-        hatchet.event.push("application:match", {"application_id": app_id})
+        try:
+            hatchet.event.push("application:match", {"application_id": app_id})
+            return {"status": "processing", "app_id": app_id}
+        except Exception as e:
+            print(f"Hatchet push failed: {e}, falling back to sync")
     
-    return {"status": "processing", "app_id": app_id}
+    # Sync fallback
+    import matching
+    programs = db.query(models.Program).all()
+    results = matching.match_application(app, programs)
+    
+    # Save results
+    db.query(models.MatchResult).filter(models.MatchResult.application_id == app_id).delete()
+    for r in results:
+        db.add(models.MatchResult(
+            application_id=app_id,
+            program_id=r["program_id"],
+            program_name=r["program_name"],
+            is_eligible=r["is_eligible"],
+            fit_score=r["fit_score"],
+            criteria_results=r["criteria_results"],
+            rejection_reasons=r["rejection_reasons"]
+        ))
+    app.status = "completed"
+    db.commit()
+    
+    return {"status": "completed", "app_id": app_id, "matches": len(results)}
 
 
 @router.get("/{app_id}/results")
