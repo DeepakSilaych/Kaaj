@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 # Hatchet client for triggering tasks
 # Set USE_HATCHET=1 to enable async processing
 import os
-if os.getenv("USE_HATCHET"):
+if os.getenv("USE_HATCHET") == "1":
     try:
         from hatchet_sdk import Hatchet
         hatchet = Hatchet()

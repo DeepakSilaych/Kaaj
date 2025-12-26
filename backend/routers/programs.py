@@ -15,7 +15,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Hatchet client for triggering workflows
 # Set USE_HATCHET=1 to enable async processing (for production)
 import os
-if os.getenv("USE_HATCHET"):
+if os.getenv("USE_HATCHET") == "1":
     try:
         from hatchet_sdk import Hatchet
         hatchet = Hatchet()
