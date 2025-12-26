@@ -41,6 +41,13 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
           >
             Unlock
           </button>
+          <button
+            type="button"
+            onClick={() => setPassword('admin123')}
+            className="w-full py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Dummy Credentials
+          </button>
         </form>
       </div>
     </div>

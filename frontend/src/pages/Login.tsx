@@ -78,14 +78,14 @@ export default function LoginPage() {
             
             <Button
               type="button"
-              variant="ghost"
-              className="w-full text-muted-foreground"
+              variant="outline"
+              className="w-full"
               onClick={() => {
                 setEmail('demo@kaaj.io')
                 setPassword('demo123')
               }}
             >
-              Dummy Credentials
+              Use Demo Credentials
             </Button>
           </form>
           
